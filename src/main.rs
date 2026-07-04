@@ -13,6 +13,8 @@ mod buffer;
 mod documents;
 mod file_chooser;
 mod localize;
+mod print;
+mod print_dialog;
 mod screencast;
 mod screencast_dialog;
 mod screencast_thread;
