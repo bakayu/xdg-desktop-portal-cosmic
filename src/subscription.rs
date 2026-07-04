@@ -26,7 +26,7 @@ pub enum Event {
     Screenshot(crate::screenshot::Args),
     Screencast(crate::screencast_dialog::Args),
     CancelScreencast(zvariant::ObjectPath<'static>),
-    Print(crate::print::PrintArgs),
+    Print(Box<crate::print::PrintArgs>),
     Accent(Srgba),
     IsDark(bool),
     HighContrast(bool),

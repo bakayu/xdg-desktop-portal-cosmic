@@ -70,7 +70,7 @@ pub enum Msg {
     Screenshot(screenshot::Msg),
     Screencast(screencast_dialog::Msg),
     Print(print::Msg),
-    Portal(subscription::Event),
+    Portal(Box<subscription::Event>),
     Output(OutputEvent, WlOutput),
     ConfigSetScreenshot(config::screenshot::Screenshot),
     /// Update config from external changes
@@ -189,7 +189,7 @@ impl cosmic::Application for CosmicPortal {
         match message {
             Msg::Access(m) => access::update_msg(self, m).map(cosmic::Action::App),
             Msg::FileChooser(id, m) => file_chooser::update_msg(self, id, m),
-            Msg::Portal(e) => match e {
+            Msg::Portal(e) => match *e {
                 subscription::Event::Access(args) => {
                     access::update_args(self, args).map(cosmic::Action::App)
                 }
@@ -204,7 +204,7 @@ impl cosmic::Application for CosmicPortal {
                     screencast_dialog::cancel(self, handle).map(cosmic::Action::App)
                 }
                 subscription::Event::Print(args) => {
-                    print::update_args(self, args).map(cosmic::Action::App)
+                    print::update_args(self, *args).map(cosmic::Action::App)
                 }
                 subscription::Event::Config(config) => self.update(Msg::ConfigSubUpdate(config)),
                 subscription::Event::Accent(_)
@@ -316,7 +316,8 @@ impl cosmic::Application for CosmicPortal {
     #[allow(clippy::collapsible_match)]
     fn subscription(&self) -> Subscription<Self::Message> {
         let mut subscriptions = vec![
-            subscription::portal_subscription(self.wayland_helper.clone()).map(Msg::Portal),
+            subscription::portal_subscription(self.wayland_helper.clone())
+                .map(|e| Msg::Portal(Box::new(e))),
             event::listen_with(|e, _, _| match e {
                 Event::PlatformSpecific(event::PlatformSpecific::Wayland(w_e)) => match w_e {
                     event::wayland::Event::Output(o_event, wl_output) => {
