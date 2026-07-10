@@ -4,9 +4,7 @@ use cosmic::cosmic_config::CosmicConfigEntry;
 use cosmic::iced::clipboard::mime::AsMimeTypes;
 use cosmic::iced::keyboard::Key;
 use cosmic::iced::keyboard::key::Named;
-use cosmic::iced::platform_specific::shell::commands::layer_surface::{
-    destroy_layer_surface, get_layer_surface,
-};
+use cosmic::iced::platform_specific::shell::commands::layer_surface::destroy_layer_surface;
 use cosmic::iced::runtime::clipboard;
 use cosmic::iced::runtime::platform_specific::wayland::layer_surface::{
     IcedOutput, SctkLayerSurfaceSettings,
@@ -646,10 +644,13 @@ pub(crate) fn view(portal: &CosmicPortal, id: window::Id) -> cosmic::Element<'_,
     .into()
 }
 
-pub fn update_msg(portal: &mut CosmicPortal, msg: Msg) -> cosmic::Task<crate::app::Msg> {
+pub fn update_msg(
+    portal: &mut CosmicPortal,
+    msg: Msg,
+) -> cosmic::Task<cosmic::Action<crate::app::Msg>> {
     match msg {
         Msg::Capture => {
-            let mut cmds: Vec<cosmic::Task<crate::app::Msg>> = portal
+            let mut cmds: Vec<cosmic::Task<cosmic::Action<crate::app::Msg>>> = portal
                 .outputs
                 .iter()
                 .map(|o| destroy_layer_surface(o.id))
@@ -880,7 +881,10 @@ pub fn update_msg(portal: &mut CosmicPortal, msg: Msg) -> cosmic::Task<crate::ap
     }
 }
 
-pub fn update_args(portal: &mut CosmicPortal, args: Args) -> cosmic::Task<crate::app::Msg> {
+pub fn update_args(
+    portal: &mut CosmicPortal,
+    args: Args,
+) -> cosmic::Task<cosmic::Action<crate::app::Msg>> {
     let Args {
         handle,
         app_id,
@@ -948,19 +952,30 @@ pub fn update_args(portal: &mut CosmicPortal, args: Args) -> cosmic::Task<crate:
                 |OutputState {
                      output, id, name, ..
                  }| {
-                    get_layer_surface(SctkLayerSurfaceSettings {
-                        id: *id,
-                        layer: Layer::Overlay,
-                        keyboard_interactivity: KeyboardInteractivity::Exclusive,
-                        input_zone: None,
-                        anchor: Anchor::all(),
-                        output: IcedOutput::Output(output.clone()),
-                        namespace: "screenshot".to_string(),
-                        size: Some((None, None)),
-                        exclusive_zone: -1,
-                        size_limits: Limits::NONE.min_height(1.0).min_width(1.0),
-                        ..Default::default()
-                    })
+                    let id = *id;
+                    let output = output.clone();
+                    let name = name.clone();
+                    cosmic::surface::surface_task::<crate::app::Msg>(
+                cosmic::surface::action::simple_layer_shell::<crate::app::Msg>(
+                    Default::default,
+                        move || {
+                            SctkLayerSurfaceSettings {
+                                    id,
+                                    layer: Layer::Overlay,
+                                    keyboard_interactivity: KeyboardInteractivity::Exclusive,
+                                    input_zone: None,
+                                    anchor: Anchor::all(),
+                                    output: IcedOutput::Output(output.clone()),
+                                    namespace: "screenshot".to_string(),
+                                    size: Some((None, None)),
+                                    exclusive_zone: -1,
+                                    size_limits: Limits::NONE.min_height(1.0).min_width(1.0),
+                                    ..Default::default()
+                                }
+                            },
+                        None::<fn() -> cosmic::Element<'static, cosmic::Action<crate::app::Msg>>>,
+                        ),
+                    )
                 },
             )
             .collect();
