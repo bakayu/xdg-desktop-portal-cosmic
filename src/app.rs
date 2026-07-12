@@ -195,9 +195,8 @@ impl cosmic::Application for CosmicPortal {
                 subscription::Event::CancelScreencast(handle) => {
                     screencast_dialog::cancel(self, handle)
                 }
-                subscription::Event::Print(args) => {
-                    print::update_args(self, *args).map(cosmic::Action::App)
-                }
+                subscription::Event::CancelPrint(handle) => print::cancel(self, handle),
+                subscription::Event::Print(args) => print::update_args(self, *args),
                 subscription::Event::Config(config) => self.update(Msg::ConfigSubUpdate(config)),
                 subscription::Event::Accent(_)
                 | subscription::Event::IsDark(_)
@@ -213,7 +212,7 @@ impl cosmic::Application for CosmicPortal {
             },
             Msg::Screenshot(m) => screenshot::update_msg(self, m),
             Msg::Screencast(m) => screencast_dialog::update_msg(self, m),
-            Msg::Print(m) => print::update_msg(self, m).map(cosmic::Action::App),
+            Msg::Print(m) => print::update_msg(self, m),
             Msg::Output(o_event, wl_output) => {
                 match o_event {
                     OutputEvent::Created(Some(info))

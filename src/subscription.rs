@@ -26,6 +26,7 @@ pub enum Event {
     Screenshot(crate::screenshot::Args),
     Screencast(crate::screencast_dialog::Args),
     CancelScreencast(zvariant::ObjectPath<'static>),
+    CancelPrint(zvariant::ObjectPath<'static>),
     Print(Box<crate::print::PrintArgs>),
     Accent(Srgba),
     IsDark(bool),
@@ -143,6 +144,11 @@ pub(crate) async fn process_changes(
                     Event::CancelScreencast(handle) => {
                         if let Err(err) = output.send(Event::CancelScreencast(handle)).await {
                             log::error!("Error sending screencast cancel: {:?}", err);
+                        };
+                    }
+                    Event::CancelPrint(handle) => {
+                        if let Err(err) = output.send(Event::CancelPrint(handle)).await {
+                            log::error!("Error sending print cancel: {:?}", err);
                         };
                     }
                     Event::Print(args) => {
